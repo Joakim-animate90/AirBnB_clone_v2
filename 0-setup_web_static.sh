@@ -1,36 +1,20 @@
 #!/usr/bin/env bash
-# Installs Nginx with the following configurations:
-#+    Listens on port 80.
-#+    Returns a page containing "Holberton School" when queried
-#+     at the root with a curl GET request.
-#+    Configures /redirect_me as a "301 Moved Permanently".
-#+    Includes a custom 404 page containing "Ceci n'est pas une page".
-#+    Contains a custom HTTP header named X-Served-By.
-#+    The value of the HTTP header is the hostname of the running server.
-
-apt-get update
-apt-get install -y nginx
-
-mkdir -p /var/www/html
-touch /var/www/html/index.html
-echo "Holberton School" > /var/www/html/index.html
-touch /var/www/html/404.html
-echo "Ceci n'est pas une page" > /var/www/html/404.html
-
-printf %s "server {
-    listen 80 default_server;
-    listen [::]:80 default_server;
-    add_header X-Served-By $HOSTNAME;
-    root   /var/www/html;
-    index  index.html index.htm;
-    location /redirect_me {
-        return 301 http://cuberule.com/;
-    }
-    error_page 404 /404.html;
-    location /404 {
-      root /var/www/html;
-      internal;
-    }
-}" > /etc/nginx/sites-available/default
-
+# sets up your web servers for the deployment of web_static
+apt-get -y update
+apt-get -y install nginx
+ufw allow 'Nginx HTTP'
+mkdir -p /data/web_static/
+mkdir -p /data/web_static/releases/test/
+mkdir -p /data/web_static/shared/
+echo "<html>
+  <head>
+  </head>
+  <body>
+    Hello Dorris
+  </body>
+</html>" > /data/web_static/releases/test/index.html
+ln -sf /data/web_static/releases/test /data/web_static/current
+chown -R ubuntu:ubuntu /data
+sed -i '/listen 80 default_server/a location /hbnb_static/ { alias /data/web_static/current/;}' /etc/nginx/sites-available/default
 service nginx restart
+exit 0
