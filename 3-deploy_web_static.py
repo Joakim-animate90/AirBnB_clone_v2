@@ -1,30 +1,35 @@
 #!/usr/bin/python3
-"""Generates a .tgz archive from the
+"""
+do_pack(): Generates a .tgz archive from the
 contents of the web_static folder
-Distributes an archive to a web server"""
+do_deploy(): Distributes an archive to a web server
+deploy (): Creates and distributes an archive to a web server
+"""
 
 from fabric.operations import local, run, put
 from datetime import datetime
 import os
 from fabric.api import env
 import re
-env.use_ssh_config = True
-env.hosts = ['','3.239.57.79']
-env.user = 'ubuntu'
+
+
+env.hosts = ['35.190.176.186', '35.196.156.157']
+
 
 def do_pack():
     """Function to compress files in an archive"""
     local("mkdir -p versions")
-    result = local("tar -cvzf versions/web_static_{}.tgz web_static"
-                   .format(datetime.strftime(datetime.now(), "%Y%m%d%H%M%S")),
-                   capture=True)
+    filename = "versions/web_static_{}.tgz".format(datetime.strftime(
+                                                   datetime.now(),
+                                                   "%Y%m%d%H%M%S"))
+    result = local("tar -cvzf {} web_static"
+                   .format(filename))
     if result.failed:
         return None
-    return result
+    return filename
 
 
 def do_deploy(archive_path):
-
     """Function to distribute an archive to a server"""
     if not os.path.exists(archive_path):
         return False
@@ -62,3 +67,12 @@ def do_deploy(archive_path):
         return False
     print('New version deployed!')
     return True
+
+
+def deploy():
+    """Creates and distributes an archive to a web server"""
+    filepath = do_pack()
+    if filepath is None:
+        return False
+    d = do_deploy(filepath)
+    return d
